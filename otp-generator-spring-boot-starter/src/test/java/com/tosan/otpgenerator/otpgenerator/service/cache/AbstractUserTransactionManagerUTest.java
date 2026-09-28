@@ -4,6 +4,7 @@ import com.tosan.otpgenerator.otpgenerator.AbstractUTest;
 import com.tosan.otpgenerator.otpgenerator.TestFixtures;
 import com.tosan.otpgenerator.otpgenerator.TestFixtures.TestOtpData;
 import com.tosan.otpgenerator.service.cache.LocalUserTransactionManager;
+import com.tosan.otpgenerator.service.cache.OtpConsumptionMarkerService;
 import com.tosan.otpgenerator.service.cache.TransactionCacheService;
 import com.tosan.otpgenerator.service.cache.UserTransactionCacheService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +24,15 @@ public abstract class AbstractUserTransactionManagerUTest extends AbstractUTest 
     @Mock
     protected TransactionCacheService transactionCacheService;
 
+    @Mock
+    protected OtpConsumptionMarkerService consumptionMarker;
+
     protected LocalUserTransactionManager userTransactionManager;
 
     @BeforeEach
     void userTransactionManagerSetUp() {
         userTransactionManager = new LocalUserTransactionManager(
-                userTransactionCacheService, transactionCacheService, otpProperties, realOtpUtil);
+                userTransactionCacheService, transactionCacheService, otpProperties, realOtpUtil, consumptionMarker);
     }
 
     protected TestOtpData sampleTransactionData() {

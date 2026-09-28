@@ -10,7 +10,7 @@ import java.util.List;
  */
 public interface UserTransactionManager {
 
-    void addTransaction(String userId, OtpData otpData);
+    long addTransaction(String userId, OtpData otpData);
 
     void unlinkTransactionFromUser(String userId, String transactionId);
 

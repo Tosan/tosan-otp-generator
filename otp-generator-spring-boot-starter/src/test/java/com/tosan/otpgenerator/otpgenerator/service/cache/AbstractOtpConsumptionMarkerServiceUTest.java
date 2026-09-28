@@ -26,7 +26,6 @@ public abstract class AbstractOtpConsumptionMarkerServiceUTest extends AbstractU
         return new OtpConsumptionMarkerService(
                 cacheManager,
                 otpProperties,
-                userTransactionManager,
                 realOtpUtil
         );
     }

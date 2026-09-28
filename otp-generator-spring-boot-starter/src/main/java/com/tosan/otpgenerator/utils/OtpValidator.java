@@ -17,7 +17,7 @@ public class OtpValidator {
         validateCommon(request.getUserIdentifier());
     }
 
-    private static void checkRequest(OtpRequest request) {
+    private void checkRequest(OtpRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Invalid request for OTP generation");
         }

@@ -42,7 +42,8 @@ public class OtpGenerationService {
                 .map(transaction -> new TransactionDataDto(
                         transaction,
                         otpUtil.buildTransactionDataString(transaction),
-                        userTransactionManager.getRemainingTtlSeconds(userId, transaction)
+                        userTransactionManager.getRemainingTtlSeconds(userId, transaction),
+                        transaction.getIssuanceSequence()
                 ))
                 .toList();
     }

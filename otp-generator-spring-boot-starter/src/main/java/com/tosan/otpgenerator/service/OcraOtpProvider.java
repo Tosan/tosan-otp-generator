@@ -60,26 +60,21 @@ public class OcraOtpProvider {
             otpData.setOtpMapData(request.getOtpData());
             otpData.setOtpLength(request.getOtpLength());
 
+            long issuanceSequence = userTransactionManager.addTransaction(request.getUserIdentifier(), otpData);
             String transactionDataString = otpUtil.buildTransactionDataString(otpData);
 
-            String userId = request.getUserIdentifier();
-            String transactionId = otpUtil.buildTransactionDataString(otpData);
-
-            if (userTransactionManager.getRegisteredTransaction(userId, transactionId) != null) {
-                throw new OtpException("Generated Otp is not expired yet!");
-            }
-
-            String generatedOtp = generateOtp(secretKey, transactionDataString, timeCounter, request.getOtpLength());
+            String generatedOtp = generateOtp(
+                    secretKey, transactionDataString, timeCounter, request.getOtpLength(), issuanceSequence);
 
             if (generatedOtp == null || generatedOtp.isBlank()) {
                 log.warn("Generated OTP is empty for userId={}", request.getUserIdentifier());
                 throw new OtpException("Generated OTP is null ");
             }
 
-            userTransactionManager.addTransaction(request.getUserIdentifier(), otpData);
-
             return generatedOtp;
 
+        } catch (OtpException ex) {
+            throw ex;
         } catch (Exception ex) {
             log.error("Failed to generate OTP for userId={}", request.getUserIdentifier(), ex);
             throw new OtpException("Failed to generate OTP", ex);
@@ -98,31 +93,41 @@ public class OcraOtpProvider {
 
         String transactionId = otpUtil.buildTransactionDataString(otpData);
 
-        consumptionMarker.checkOtpConsumption(userId, transactionId);
+        OtpData cachedTransaction = userTransactionManager.getRegisteredTransaction(userId, transactionId);
+        if (cachedTransaction == null) {
+            throw new OtpException("Transaction expired or not found");
+        }
 
-        if (!validateOtp(request, userId)) {
+        long issuanceSequence = resolveIssuanceSequence(cachedTransaction);
+        consumptionMarker.checkOtpConsumption(userId, transactionId, issuanceSequence);
+
+        String transactionDataString = otpUtil.buildTransactionDataString(cachedTransaction);
+
+        if (!validateOtp(request, userId, transactionDataString, issuanceSequence)) {
             throw new OtpException("Invalid OTP");
         }
 
-        checkTransactionExists(userId, transactionId);
-        consumptionMarker.markOtpConsumed(userId, transactionId);
-
+        consumptionMarker.markOtpConsumed(userId, transactionId, issuanceSequence);
+        userTransactionManager.unlinkTransactionFromUser(userId, transactionId);
     }
 
-    private boolean validateOtp(OtpVerificationRequest request, String userId) {
+    private boolean validateOtp(OtpVerificationRequest request,
+                                String userId,
+                                String transactionDataString,
+                                long issuanceSequence) {
 
         try {
             long currentStep = timeStepUtil.currentTimeStep(properties.getTimeStepSeconds());
             byte[] secretKey = secretKeyProvider.getSecretKey(userId);
 
-            OtpData otpData = new OtpData();
-            otpData.setOtpMapData(request.getOtpData());
-            otpData.setOtpLength(request.getOtpLength());
-
-            String transactionDataString = otpUtil.buildTransactionDataString(otpData);
-
             for (long step = -properties.getAllowedClockSkew(); step <= properties.getAllowedClockSkew(); step++) {
-                if (matchesSubmittedOtp(secretKey, transactionDataString, currentStep + step, request.getOtp(), request.getOtpLength())) {
+                if (matchesSubmittedOtp(
+                        secretKey,
+                        transactionDataString,
+                        currentStep + step,
+                        request.getOtp(),
+                        request.getOtpLength(),
+                        issuanceSequence)) {
                     return true;
                 }
             }
@@ -133,24 +138,31 @@ public class OcraOtpProvider {
         }
     }
 
-    private boolean matchesSubmittedOtp(byte[] secretKey, String otpData, long timeCounter, String submittedOtp, int otpLength) {
+    private boolean matchesSubmittedOtp(byte[] secretKey,
+                                        String otpData,
+                                        long timeCounter,
+                                        String submittedOtp,
+                                        int otpLength,
+                                        long issuanceSequence) {
 
-        String candidate = generateOtp(secretKey, otpData, timeCounter, otpLength);
+        String candidate = generateOtp(secretKey, otpData, timeCounter, otpLength, issuanceSequence);
         return MessageDigest.isEqual(candidate.getBytes(StandardCharsets.UTF_8),
                 submittedOtp.getBytes(StandardCharsets.UTF_8));
     }
 
-    private void checkTransactionExists(String userId, String transactionId) {
+    private long resolveIssuanceSequence(OtpData cachedTransaction) {
 
-        OtpData cachedTransaction = userTransactionManager.getRegisteredTransaction(userId, transactionId);
-        if (cachedTransaction == null) {
-            throw new OtpException("Transaction expired or not found");
-        }
+        Long issuanceSequence = cachedTransaction.getIssuanceSequence();
+        return issuanceSequence == null ? 1L : issuanceSequence;
     }
 
-    private String generateOtp(byte[] secretKey, String otpData, long timeCounter, int otpLength) {
+    private String generateOtp(byte[] secretKey,
+                                 String otpData,
+                                 long timeCounter,
+                                 int otpLength,
+                                 long issuanceSequence) {
 
-        String otpPayload = otpUtil.buildOtpPayload(otpData, timeCounter);
+        String otpPayload = otpUtil.buildOtpPayload(otpData, timeCounter, issuanceSequence);
 
         byte[] hash = otpUtil.generateHmac(
                 properties.getCryptoAlgorithm(),
