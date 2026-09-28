@@ -26,4 +26,12 @@ public class OtpData {
      * OTP length (number of digits).
      */
     private Integer otpLength;
+
+    /**
+     * Server-managed issuance counter for the same client transaction data.
+     * Equals the number of already-consumed issuances plus one, so each
+     * re-issuance produces a different OTP payload. Excluded from the
+     * transaction identity string and from client requests.
+     */
+    private Long issuanceSequence;
 }

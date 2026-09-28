@@ -10,8 +10,10 @@ import org.mockito.InOrder;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -31,8 +33,7 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
 
         when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
         when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any()))
-                .thenReturn(null)
-                .thenReturn(transactionData);
+                .thenReturn(cachedOtpData(generateRequest, 1L));
 
         String generatedOtp = ocraOtpProvider.generate(generateRequest);
 
@@ -42,8 +43,60 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
         assertDoesNotThrow(() -> ocraOtpProvider.validate(verificationRequest));
 
         InOrder inOrder = inOrder(consumptionMarker);
-        inOrder.verify(consumptionMarker).checkOtpConsumption(eq(USER_ID), any());
-        inOrder.verify(consumptionMarker).markOtpConsumed(eq(USER_ID), any());
+        inOrder.verify(consumptionMarker).checkOtpConsumption(eq(USER_ID), any(), anyLong());
+        inOrder.verify(consumptionMarker).markOtpConsumed(eq(USER_ID), any(), anyLong());
+    }
+
+    @Test
+    void regenerateAfterConsumptionInSameTimeWindow_producesNewOtpThatValidates() {
+
+        TestOtpData transactionData = sampleTransactionData();
+        TestOtpRequest generateRequest = TestFixtures.otpRequest(USER_ID, transactionData);
+
+        when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
+        when(userTransactionManager.addTransaction(eq(USER_ID), any()))
+                .thenReturn(1L)
+                .thenReturn(2L);
+
+        String firstOtp = ocraOtpProvider.generate(generateRequest);
+        String secondOtp = ocraOtpProvider.generate(generateRequest);
+
+        assertNotEquals(firstOtp, secondOtp);
+
+        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any()))
+                .thenReturn(cachedOtpData(generateRequest, 2L));
+
+        TestOtpVerificationRequest verificationRequest =
+                TestFixtures.otpVerificationRequest(USER_ID, transactionData, secondOtp);
+
+        assertDoesNotThrow(() -> ocraOtpProvider.validate(verificationRequest));
+
+        InOrder inOrder = inOrder(consumptionMarker);
+        inOrder.verify(consumptionMarker).checkOtpConsumption(eq(USER_ID), any(), eq(2L));
+        inOrder.verify(consumptionMarker).markOtpConsumed(eq(USER_ID), any(), eq(2L));
+    }
+
+    @Test
+    void previouslyConsumedOtp_doesNotValidateAgainstReissuedTransaction() {
+
+        TestOtpData transactionData = sampleTransactionData();
+        TestOtpRequest generateRequest = TestFixtures.otpRequest(USER_ID, transactionData);
+
+        when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
+        when(userTransactionManager.addTransaction(eq(USER_ID), any())).thenReturn(1L);
+
+        String firstOtp = ocraOtpProvider.generate(generateRequest);
+
+        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any()))
+                .thenReturn(cachedOtpData(generateRequest, 2L));
+
+        TestOtpVerificationRequest verificationRequest =
+                TestFixtures.otpVerificationRequest(USER_ID, transactionData, firstOtp);
+
+        OtpException exception = assertThrows(OtpException.class,
+                () -> ocraOtpProvider.validate(verificationRequest));
+
+        assertEquals("Invalid OTP", exception.getMessage());
     }
 
     @Test
@@ -53,6 +106,7 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
         TestOtpRequest generateRequest = TestFixtures.otpRequest(USER_ID, transactionData);
 
         when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
+        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any())).thenReturn(null);
         String generatedOtp = ocraOtpProvider.generate(generateRequest);
 
         TestOtpVerificationRequest request =
@@ -71,8 +125,10 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
         TestOtpVerificationRequest request =
                 TestFixtures.otpVerificationRequest(USER_ID, transactionData, "123456");
 
+        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any())).thenReturn(cachedOtpData(
+                TestFixtures.otpRequest(USER_ID, transactionData), 1L));
         doThrow(new OtpException("OTP already used or expired"))
-                .when(consumptionMarker).checkOtpConsumption(eq(USER_ID), any());
+                .when(consumptionMarker).checkOtpConsumption(eq(USER_ID), any(), anyLong());
 
         OtpException exception = assertThrows(OtpException.class, () -> ocraOtpProvider.validate(request));
 
@@ -86,6 +142,8 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
         TestOtpVerificationRequest request =
                 TestFixtures.otpVerificationRequest(USER_ID, transactionData, "000000");
 
+        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any())).thenReturn(cachedOtpData(
+                TestFixtures.otpRequest(USER_ID, transactionData), 1L));
         when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
 
         OtpException exception = assertThrows(OtpException.class, () -> ocraOtpProvider.validate(request));
@@ -100,6 +158,8 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
         TestOtpVerificationRequest request =
                 TestFixtures.otpVerificationRequest(USER_ID, transactionData, "123456");
 
+        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any())).thenReturn(cachedOtpData(
+                TestFixtures.otpRequest(USER_ID, transactionData), 1L));
         when(secretKeyProvider.getSecretKey(USER_ID)).thenThrow(new RuntimeException("secret key failure"));
 
         OtpException exception = assertThrows(OtpException.class, () -> ocraOtpProvider.validate(request));

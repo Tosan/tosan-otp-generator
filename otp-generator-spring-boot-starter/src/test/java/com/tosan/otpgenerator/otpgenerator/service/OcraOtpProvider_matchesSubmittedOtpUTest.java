@@ -46,7 +46,8 @@ class OcraOtpProvider_matchesSubmittedOtpUTest extends AbstractOcraOtpProviderUT
         long timeCounter = timeStepUtil.currentTimeStep(otpProperties.getTimeStepSeconds());
 
         org.mockito.Mockito.when(otpUtil.buildOtpPayload(org.mockito.ArgumentMatchers.anyString(),
-                org.mockito.ArgumentMatchers.anyLong())).thenReturn("1|dataIdentifier=tx-1");
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong()))
+                .thenReturn("1|dataIdentifier=tx-1");
         org.mockito.Mockito.when(otpUtil.generateHmac(org.mockito.ArgumentMatchers.anyString(),
                 org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(new byte[20]);
         org.mockito.Mockito.when(otpUtil.truncate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(6)))

@@ -14,14 +14,14 @@ class OtpUtil_buildOtpPayloadUTest extends AbstractUTest {
     @Test
     void validTransactionStringAndTimeCounter_returnsExpectedFormat() {
 
-        String result = realOtpUtil.buildOtpPayload("dataIdentifier=tx-1", 42L);
+        String result = realOtpUtil.buildOtpPayload("dataIdentifier=tx-1", 42L, 1L);
         assertEquals("42|dataIdentifier=tx-1", result);
     }
 
     @Test
-    void zeroTimeCounter_returnsZeroPrefixedPayload() {
+    void issuanceGreaterThanOne_appendsSequenceToPayload() {
 
-        String result = realOtpUtil.buildOtpPayload("dataIdentifier=tx-1", 0L);
-        assertEquals("0|dataIdentifier=tx-1", result);
+        String result = realOtpUtil.buildOtpPayload("dataIdentifier=tx-1", 42L, 2L);
+        assertEquals("42|dataIdentifier=tx-1|2", result);
     }
 }

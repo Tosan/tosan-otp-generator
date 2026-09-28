@@ -29,4 +29,11 @@ public class TransactionDataDto {
      * Remaining transaction expiration time (in seconds).
      */
     private Long remainingTtl;
+
+
+    /**
+     * Server-managed issuance counter for the same client transaction data.
+     * Excluded from the transaction identity string.
+     */
+    private Long issuanceSequence;
 }

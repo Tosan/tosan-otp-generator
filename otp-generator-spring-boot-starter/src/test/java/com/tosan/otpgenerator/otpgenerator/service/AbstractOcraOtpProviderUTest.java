@@ -1,8 +1,10 @@
 package com.tosan.otpgenerator.otpgenerator.service;
 
+import com.tosan.otpgenerator.model.OtpData;
 import com.tosan.otpgenerator.otpgenerator.AbstractUTest;
 import com.tosan.otpgenerator.otpgenerator.TestFixtures;
 import com.tosan.otpgenerator.otpgenerator.TestFixtures.TestOtpData;
+import com.tosan.otpgenerator.otpgenerator.TestFixtures.TestOtpRequest;
 import com.tosan.otpgenerator.service.OcraOtpProvider;
 import com.tosan.otpgenerator.service.SecretKeyProvider;
 import com.tosan.otpgenerator.service.cache.OtpConsumptionMarkerService;
@@ -10,6 +12,8 @@ import com.tosan.otpgenerator.service.cache.UserTransactionManager;
 import com.tosan.otpgenerator.utils.OtpUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -18,6 +22,7 @@ import java.math.BigDecimal;
  * @author T.Sadeh
  * @since 28-06-2026
  */
+@MockitoSettings(strictness = Strictness.LENIENT)
 public abstract class AbstractOcraOtpProviderUTest extends AbstractUTest {
 
     @Mock
@@ -36,6 +41,9 @@ public abstract class AbstractOcraOtpProviderUTest extends AbstractUTest {
 
     @BeforeEach
     void ocraOtpProviderSetUp() {
+        org.mockito.Mockito.when(userTransactionManager.addTransaction(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(1L);
         ocraOtpProvider = createOcraOtpProviderWithRealUtil();
     }
 
@@ -60,19 +68,38 @@ public abstract class AbstractOcraOtpProviderUTest extends AbstractUTest {
                 TRANSACTION_ID, "acc-123", new BigDecimal("100.00"), "USD");
     }
 
+    protected OtpData cachedOtpData(TestOtpRequest generateRequest, long issuanceSequence) {
+        OtpData cached = new OtpData();
+        cached.setOtpMapData(generateRequest.getOtpData());
+        cached.setOtpLength(generateRequest.getOtpLength());
+        cached.setIssuanceSequence(issuanceSequence);
+        return cached;
+    }
+
     protected String invokeGenerateOtp(byte[] secretKey, TestOtpData transactionData, long timeCounter)
             throws Exception {
         Method generateOtpMethod = OcraOtpProvider.class.getDeclaredMethod(
-                "generateOtp", byte[].class, String.class, long.class, int.class);
+                "generateOtp", byte[].class, String.class, long.class, int.class, long.class);
         generateOtpMethod.setAccessible(true);
         String transactionDataString = realOtpUtil.buildTransactionDataString(transactionData);
         return (String) generateOtpMethod.invoke(
-                ocraOtpProvider, secretKey, transactionDataString, timeCounter, 6);
+                ocraOtpProvider, secretKey, transactionDataString, timeCounter, 6, 1L);
+    }
+
+    protected String invokeGenerateOtp(byte[] secretKey, TestOtpData transactionData, long timeCounter, long issuance)
+            throws Exception {
+        Method generateOtpMethod = OcraOtpProvider.class.getDeclaredMethod(
+                "generateOtp", byte[].class, String.class, long.class, int.class, long.class);
+        generateOtpMethod.setAccessible(true);
+        String transactionDataString = realOtpUtil.buildTransactionDataString(transactionData);
+        return (String) generateOtpMethod.invoke(
+                ocraOtpProvider, secretKey, transactionDataString, timeCounter, 6, issuance);
     }
 
     protected Method getMatchesSubmittedOtpMethod() throws NoSuchMethodException {
         Method method = OcraOtpProvider.class.getDeclaredMethod(
-                "matchesSubmittedOtp", byte[].class, String.class, long.class, String.class, int.class);
+                "matchesSubmittedOtp",
+                byte[].class, String.class, long.class, String.class, int.class, long.class);
         method.setAccessible(true);
         return method;
     }
@@ -85,6 +112,6 @@ public abstract class AbstractOcraOtpProviderUTest extends AbstractUTest {
             String submittedOtp) throws Exception {
         String transactionDataString = realOtpUtil.buildTransactionDataString(transactionData);
         return (boolean) matchesSubmittedOtpMethod.invoke(
-                ocraOtpProvider, secretKey, transactionDataString, timeCounter, submittedOtp, 6);
+                ocraOtpProvider, secretKey, transactionDataString, timeCounter, submittedOtp, 6, 1L);
     }
 }

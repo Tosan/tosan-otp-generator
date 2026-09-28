@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author T.Sadeh
@@ -16,6 +17,8 @@ class UserTransactionManager_addTransactionUTest extends AbstractUserTransaction
     void validData_addsTransactionToBothCaches() {
 
         var transactionData = sampleTransactionData();
+
+        when(transactionCacheService.getTransaction(any())).thenReturn(null);
 
         userTransactionManager.addTransaction(USER_ID, transactionData);
 
