@@ -1,6 +1,6 @@
 package com.tosan.otpgenerator.otpgenerator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.tosan.client.redis.api.TedissonCacheManager;
 import com.tosan.otpgenerator.config.OtpProperties;
 import com.tosan.otpgenerator.utils.OtpUtil;
