@@ -10,7 +10,7 @@
         <relativePath />
     </parent>
 
-    <groupId>com.tosan</groupId>
+    <groupId>com.tosan.tools</groupId>
     <artifactId>tosan-otp-generator</artifactId>
     <packaging>pom</packaging>
     <name>tosan-otp-generator</name>
@@ -56,7 +56,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.tosan</groupId>
+                <groupId>com.tosan.tools</groupId>
                 <artifactId>otp-generator-spring-boot-starter</artifactId>
                 <version>${project.version}</version>
             </dependency>

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.tosan</groupId>
+        <groupId>com.tosan.tools</groupId>
         <artifactId>tosan-otp-generator</artifactId>
         <version>1.0.5-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
@@ -19,7 +19,7 @@
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.tosan</groupId>
+            <groupId>com.tosan.tools</groupId>
             <artifactId>otp-generator-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
