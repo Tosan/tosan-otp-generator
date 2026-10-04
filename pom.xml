@@ -49,7 +49,7 @@
 
     <properties>
         <java.version>25</java.version>
-        <tedisson.version>2.0.1-SNAPSHOT</tedisson.version>
+        <tedisson.version>2.0.1</tedisson.version>
         <lock-manager.version>1.3.0</lock-manager.version>
     </properties>
 
