@@ -65,8 +65,7 @@ class OcraOtpProvider_generateUTest extends AbstractOcraOtpProviderUTest {
 
         OtpException exception = assertThrows(OtpException.class, () -> ocraOtpProvider.generate(request));
 
-        assertEquals("Failed to generate OTP", exception.getMessage());
-        assertEquals("Failed to compute OTP using configured HMAC algorithm", exception.getCause().getMessage());
+        assertEquals("Failed to compute OTP using configured HMAC algorithm", exception.getMessage());
     }
 
     @Test
@@ -79,13 +78,12 @@ class OcraOtpProvider_generateUTest extends AbstractOcraOtpProviderUTest {
 
         when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
         when(otpUtil.buildTransactionDataString(any())).thenReturn("dataIdentifier=tx-1");
-        when(otpUtil.buildOtpPayload(anyString(), anyLong())).thenReturn("1|dataIdentifier=tx-1");
+        when(otpUtil.buildOtpPayload(anyString(), anyLong(), anyLong())).thenReturn("1|dataIdentifier=tx-1");
         when(otpUtil.generateHmac(anyString(), any(), any())).thenReturn(new byte[20]);
         when(otpUtil.truncate(any(), eq(6))).thenReturn("   ");
 
         OtpException exception = assertThrows(OtpException.class, () -> ocraOtpProvider.generate(request));
 
-        assertEquals("Failed to generate OTP", exception.getMessage());
-        assertEquals("Generated OTP is null ", exception.getCause().getMessage());
+        assertEquals("Generated OTP is null ", exception.getMessage());
     }
 }

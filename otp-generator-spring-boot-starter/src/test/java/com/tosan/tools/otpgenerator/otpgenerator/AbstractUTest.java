@@ -47,6 +47,6 @@ public abstract class AbstractUTest {
     }
 
     protected String transactionCacheKey(String transactionId, String userId) {
-        return realOtpUtil.buildTransactionKey(transactionId, userId);
+        return realOtpUtil.buildTransactionKey(userId, transactionId);
     }
 }

@@ -48,14 +48,16 @@ public class OtpUtil {
         );
         return map.entrySet().stream()
                 .filter(e -> e.getValue() != null)
+                .filter(e -> !"issuanceSequence".equals(e.getKey()))
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> encode(e.getKey()) + "=" + encode(String.valueOf(e.getValue())))
                 .collect(Collectors.joining("&"));
     }
 
-    public String buildOtpPayload(String transactionPart, long timeCounter) {
+    public String buildOtpPayload(String transactionPart, long timeCounter, long issuanceSequence) {
 
-        return timeCounter + "|" + transactionPart;
+        String base = timeCounter + "|" + transactionPart;
+        return issuanceSequence > 1 ? base + "|" + issuanceSequence : base;
     }
 
     private String encode(String value) {

@@ -22,12 +22,12 @@ class OtpConsumptionMarkerService_consumeAfterSuccessfulValidationUTest extends 
         when(cacheManager.incrementAndGetAtomicItem("OTP_CONSUMED", consumptionCacheKey()))
                 .thenReturn(1L);
 
-        otpConsumptionMarker.markOtpConsumed(USER_ID, TRANSACTION_ID);
+        otpConsumptionMarker.markOtpConsumed(USER_ID, TRANSACTION_ID, 1L);
 
+        long expectedTtl = otpProperties.getTimeStepSeconds() * (1 + otpProperties.getAllowedClockSkew());
         verify(cacheManager).expireAtomicItem(
                 "OTP_CONSUMED", consumptionCacheKey(),
-                otpProperties.getTimeStepSeconds(), TimeUnit.SECONDS);
-        verify(userTransactionManager).unlinkTransactionFromUser(USER_ID, TRANSACTION_ID);
+                expectedTtl, TimeUnit.SECONDS);
     }
 
     @Test
@@ -38,7 +38,7 @@ class OtpConsumptionMarkerService_consumeAfterSuccessfulValidationUTest extends 
 
         OtpException exception = assertThrows(
                 OtpException.class,
-                () -> otpConsumptionMarker.markOtpConsumed(USER_ID, TRANSACTION_ID)
+                () -> otpConsumptionMarker.markOtpConsumed(USER_ID, TRANSACTION_ID, 1L)
         );
 
         assertEquals("OTP already used or expired", exception.getMessage());

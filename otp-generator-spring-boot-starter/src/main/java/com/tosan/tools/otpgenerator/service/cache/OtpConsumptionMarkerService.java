@@ -18,41 +18,44 @@ public class OtpConsumptionMarkerService {
 
     private final TedissonCacheManager cacheManager;
     private final OtpProperties properties;
-    private final UserTransactionManager userTransactionManager;
     private final OtpUtil otpUtil;
 
     public OtpConsumptionMarkerService(TedissonCacheManager cacheManager,
                                        OtpProperties properties,
-                                       UserTransactionManager userTransactionManager,
                                        OtpUtil otpUtil) {
         this.cacheManager = cacheManager;
         this.properties = properties;
-        this.userTransactionManager = userTransactionManager;
         this.otpUtil = otpUtil;
     }
 
-    public void checkOtpConsumption(String userId, String transactionId) {
+    public long getConsumedCount(String userId, String transactionId) {
 
-        if (cacheManager.getAtomicValue(CONSUMED_CACHE, otpUtil.buildTransactionKey(userId, transactionId)) >= 1) {
-            throw new OtpException("OTP already used or expired");
+        Number count = cacheManager.getItemFromCache(CONSUMED_CACHE, otpUtil.buildTransactionKey(userId, transactionId));
+        return count == null ? 0 : count.longValue();
+    }
+
+    public void checkOtpConsumption(String userId, String transactionId, long issuanceSequence) {
+
+        if (getConsumedCount(userId, transactionId) >= issuanceSequence) {
+            throw new OtpException("OTP already used");
         }
     }
 
 
-    public void markOtpConsumed(String userId, String transactionId) {
+    public void markOtpConsumed(String userId, String transactionId, long issuanceSequence) {
 
         String key = otpUtil.buildTransactionKey(userId, transactionId);
         long count = cacheManager.incrementAndGetAtomicItem(CONSUMED_CACHE, key);
 
-        if (count == 1) {
-            cacheManager.expireAtomicItem(
-                    CONSUMED_CACHE, key, properties.getTimeStepSeconds(), TimeUnit.SECONDS);
-        }
+        long markerTtlSeconds = properties.getTimeStepSeconds() * (1 + properties.getAllowedClockSkew());
+        cacheManager.expireAtomicItem(
+                CONSUMED_CACHE, key, markerTtlSeconds, TimeUnit.SECONDS);
 
-        if (count > 1) {
+        if (count > issuanceSequence) {
             throw new OtpException("OTP already used or expired");
         }
-        userTransactionManager.unlinkTransactionFromUser(userId, transactionId);
+
+        cacheManager.addItemToCache(CONSUMED_CACHE, key, count, markerTtlSeconds, TimeUnit.SECONDS);
     }
 
 }

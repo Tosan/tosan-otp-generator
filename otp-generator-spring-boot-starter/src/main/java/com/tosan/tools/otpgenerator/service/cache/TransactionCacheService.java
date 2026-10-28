@@ -45,6 +45,11 @@ public class TransactionCacheService {
         cacheManager.removeItemFromCache(TRANSACTION_CACHE, transactionUserKey);
     }
 
+    public void replaceTransaction(OtpData txData, String transactionUserKey, long ttlSeconds) {
+
+        cacheManager.addItemToCache(TRANSACTION_CACHE, transactionUserKey, txData, ttlSeconds, TimeUnit.SECONDS);
+    }
+
     public OtpData getTransaction(String transactionUserKey) {
 
         return cacheManager.getItemFromCache(TRANSACTION_CACHE, transactionUserKey);

@@ -25,29 +25,26 @@ public class LocalUserTransactionManager extends AbstractUserTransactionManager 
     public LocalUserTransactionManager(UserTransactionCacheService userTransactionCacheService,
                                        TransactionCacheService transactionCacheService,
                                        OtpProperties otpProperties,
-                                       OtpUtil otpUtil) {
+                                       OtpUtil otpUtil,
+                                       OtpConsumptionMarkerService consumptionMarker) {
 
-        super(userTransactionCacheService, transactionCacheService, otpUtil);
+        super(userTransactionCacheService, transactionCacheService, otpUtil, consumptionMarker);
         this.otpProperties = otpProperties;
     }
 
     @Override
-    public void addTransaction(String userId, OtpData otpData) {
+    public long addTransaction(String userId, OtpData otpData) {
 
-        String transactionDataString = otpUtil.buildTransactionDataString(otpData);
-        String transactionUserKey = otpUtil.buildTransactionKey(transactionDataString, userId);
         long ttl = otpProperties.getTimeStepSeconds();
-
         synchronized (getUserLock(userId)) {
-            transactionCacheService.addTransaction(otpData, transactionUserKey, ttl);
-            userTransactionCacheService.addTransactionToUser(userId, transactionUserKey, ttl);
+            return registerOrReissueTransaction(userId, otpData, ttl);
         }
     }
 
     @Override
     public void unlinkTransactionFromUser(String userId, String transactionId) {
 
-        String transactionUserKey = otpUtil.buildTransactionKey(transactionId, userId);
+        String transactionUserKey = otpUtil.buildTransactionKey(userId, transactionId);
 
         synchronized (getUserLock(userId)) {
             transactionCacheService.removeTransaction(transactionUserKey);
@@ -55,4 +52,3 @@ public class LocalUserTransactionManager extends AbstractUserTransactionManager 
         }
     }
 }
-

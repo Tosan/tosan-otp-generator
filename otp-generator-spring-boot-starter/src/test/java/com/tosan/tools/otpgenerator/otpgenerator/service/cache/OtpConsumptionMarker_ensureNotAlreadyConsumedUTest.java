@@ -16,13 +16,13 @@ class OtpConsumptionMarkerService_ensureNotAlreadyConsumedUTest extends Abstract
     @Test
     void alreadyConsumedTransaction_throwsOtpExceptionWithAlreadyUsedMessage() {
 
-        when(cacheManager.getAtomicValue("OTP_CONSUMED", consumptionCacheKey())).thenReturn(1L);
+        when(cacheManager.getItemFromCache("OTP_CONSUMED", consumptionCacheKey())).thenReturn(1L);
 
         OtpException exception = assertThrows(
                 OtpException.class,
-                () -> otpConsumptionMarker.checkOtpConsumption(USER_ID, TRANSACTION_ID)
+                () -> otpConsumptionMarker.checkOtpConsumption(USER_ID, TRANSACTION_ID, 1L)
         );
 
-        assertEquals("OTP already used or expired", exception.getMessage());
+        assertEquals("OTP already used", exception.getMessage());
     }
 }

@@ -74,10 +74,9 @@ public class OtpAutoConfiguration {
     public OtpConsumptionMarkerService otpConsumptionMarker(
             TedissonCacheManager cacheManager,
             OtpProperties properties,
-            UserTransactionManager userTransactionManager,
             OtpUtil otpUtil) {
 
-        return new OtpConsumptionMarkerService(cacheManager, properties, userTransactionManager, otpUtil);
+        return new OtpConsumptionMarkerService(cacheManager, properties, otpUtil);
     }
 
     @Bean
@@ -123,10 +122,11 @@ public class OtpAutoConfiguration {
                 UserTransactionCacheService userTransactionCacheService,
                 TransactionCacheService transactionCacheService,
                 OtpProperties otpProperties,
-                OtpUtil otpUtil) {
+                OtpUtil otpUtil,
+                OtpConsumptionMarkerService consumptionMarker) {
 
             return new LocalUserTransactionManager(
-                    userTransactionCacheService, transactionCacheService, otpProperties, otpUtil);
+                    userTransactionCacheService, transactionCacheService, otpProperties, otpUtil, consumptionMarker);
         }
     }
 
@@ -151,11 +151,12 @@ public class OtpAutoConfiguration {
                 TransactionCacheService transactionCacheService,
                 LockManagementService lockManagementService,
                 OtpProperties otpProperties,
-                OtpUtil otpUtil) {
+                OtpUtil otpUtil,
+                OtpConsumptionMarkerService consumptionMarker) {
 
             return new CentralUserTransactionManager(
                     userTransactionCacheService, transactionCacheService,
-                    lockManagementService, otpProperties, otpUtil);
+                    lockManagementService, otpProperties, otpUtil, consumptionMarker);
         }
     }
 }

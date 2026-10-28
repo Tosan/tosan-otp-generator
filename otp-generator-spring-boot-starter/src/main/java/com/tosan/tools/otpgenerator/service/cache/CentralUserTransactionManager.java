@@ -17,32 +17,28 @@ public class CentralUserTransactionManager extends AbstractUserTransactionManage
     private final LockManagementService lockManagementService;
     private final OtpProperties otpProperties;
 
-
     public CentralUserTransactionManager(UserTransactionCacheService userTransactionCacheService,
                                          TransactionCacheService transactionCacheService,
                                          LockManagementService lockManagementService,
                                          OtpProperties otpProperties,
-                                         OtpUtil otpUtil) {
+                                         OtpUtil otpUtil,
+                                         OtpConsumptionMarkerService consumptionMarker) {
 
-        super(userTransactionCacheService, transactionCacheService, otpUtil);
+        super(userTransactionCacheService, transactionCacheService, otpUtil, consumptionMarker);
 
         this.lockManagementService = lockManagementService;
         this.otpProperties = otpProperties;
     }
 
     @Override
-    public void addTransaction(String userId, OtpData otpData) {
-
-        String transactionDataString = otpUtil.buildTransactionDataString(otpData);
-        String transactionUserKey = otpUtil.buildTransactionKey(transactionDataString, userId);
+    public long addTransaction(String userId, OtpData otpData) {
 
         long ttl = otpProperties.getTimeStepSeconds();
 
         lockManagementService.requestWriteLock(USER_TRANSACTION_LOCK_TYPE, userId, LOCK_TIMEOUT_SECONDS, false);
 
         try {
-            transactionCacheService.addTransaction(otpData, transactionUserKey, ttl);
-            userTransactionCacheService.addTransactionToUser(userId, transactionUserKey, ttl);
+            return registerOrReissueTransaction(userId, otpData, ttl);
         } finally {
             lockManagementService.unlock(USER_TRANSACTION_LOCK_TYPE, userId);
         }
@@ -51,7 +47,7 @@ public class CentralUserTransactionManager extends AbstractUserTransactionManage
     @Override
     public void unlinkTransactionFromUser(String userId, String transactionId) {
 
-        String transactionUserKey = otpUtil.buildTransactionKey(transactionId, userId);
+        String transactionUserKey = otpUtil.buildTransactionKey(userId, transactionId);
 
         lockManagementService.requestWriteLock(USER_TRANSACTION_LOCK_TYPE, userId, LOCK_TIMEOUT_SECONDS, false);
         try {
@@ -64,4 +60,3 @@ public class CentralUserTransactionManager extends AbstractUserTransactionManage
         }
     }
 }
-
