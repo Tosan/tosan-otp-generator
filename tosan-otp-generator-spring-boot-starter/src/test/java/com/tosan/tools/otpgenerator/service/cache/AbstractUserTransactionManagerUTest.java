@@ -1,0 +1,38 @@
+package com.tosan.tools.otpgenerator.service.cache;
+
+import com.tosan.tools.otpgenerator.AbstractUTest;
+import com.tosan.tools.otpgenerator.TestFixtures;
+import com.tosan.tools.otpgenerator.TestFixtures.TestOtpData;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mock;
+
+import java.math.BigDecimal;
+
+/**
+ * @author T.Sadeh
+ * @since 28-06-2026
+ */
+public abstract class AbstractUserTransactionManagerUTest extends AbstractUTest {
+
+    @Mock
+    protected UserTransactionCacheService userTransactionCacheService;
+
+    @Mock
+    protected TransactionCacheService transactionCacheService;
+
+    @Mock
+    protected OtpConsumptionMarkerService consumptionMarker;
+
+    protected LocalUserTransactionManager userTransactionManager;
+
+    @BeforeEach
+    void userTransactionManagerSetUp() {
+        userTransactionManager = new LocalUserTransactionManager(
+                userTransactionCacheService, transactionCacheService, otpProperties, realOtpUtil, consumptionMarker);
+    }
+
+    protected TestOtpData sampleTransactionData() {
+        return TestFixtures.otpData(
+                TRANSACTION_ID, "acc-123", new BigDecimal("100.00"), "USD");
+    }
+}
