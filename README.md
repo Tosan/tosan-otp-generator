@@ -6,8 +6,8 @@ Spring Boot starter for OCRA-based OTP generation and validation with transactio
 
 ```xml
 <dependency>
-    <groupId>com.tosan.tools</groupId>
-    <artifactId>otp-generator-spring-boot-starter</artifactId>
+    <groupId>com.tosan.tools.otpgenerator</groupId>
+    <artifactId>tosan-otp-generator-spring-boot-starter</artifactId>
     <version>REPLACE_WITH_LATEST_VERSION</version>
 </dependency>
 ```
@@ -64,4 +64,4 @@ public class OtpService {
 }
 ```
 
-See `otp-generator-spring-boot-sample` for a complete example.
+See `tosan-otp-generator-sample` for a complete example.
