@@ -48,31 +48,13 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
     }
 
     @Test
-    void otpExpirationFromVerificationRequest_isUsedAsTimeCounter() {
-
-        TestOtpData transactionData = sampleTransactionData();
-        TestOtpRequest generateRequest = TestFixtures.otpRequest(USER_ID, transactionData);
-        generateRequest.setOtpExpiration(60L);
-
-        when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
-        when(userTransactionManager.getRegisteredTransaction(eq(USER_ID), any()))
-                .thenReturn(cachedOtpData(generateRequest, 1L));
-
-        String generatedOtp = ocraOtpProvider.generate(generateRequest);
-        TestOtpVerificationRequest verificationRequest =
-                TestFixtures.otpVerificationRequest(USER_ID, transactionData, generatedOtp, 6, 60L);
-
-        assertDoesNotThrow(() -> ocraOtpProvider.validate(verificationRequest));
-    }
-
-    @Test
     void regenerateAfterConsumptionInSameTimeWindow_producesNewOtpThatValidates() {
 
         TestOtpData transactionData = sampleTransactionData();
         TestOtpRequest generateRequest = TestFixtures.otpRequest(USER_ID, transactionData);
 
         when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
-        when(userTransactionManager.addTransaction(eq(USER_ID), any(), org.mockito.ArgumentMatchers.nullable(Long.class)))
+        when(userTransactionManager.addTransaction(eq(USER_ID), any()))
                 .thenReturn(1L)
                 .thenReturn(2L);
 
@@ -101,7 +83,7 @@ class OcraOtpProvider_validateUTest extends AbstractOcraOtpProviderUTest {
         TestOtpRequest generateRequest = TestFixtures.otpRequest(USER_ID, transactionData);
 
         when(secretKeyProvider.getSecretKey(USER_ID)).thenReturn(TestFixtures.validSecretKey());
-        when(userTransactionManager.addTransaction(eq(USER_ID), any(), org.mockito.ArgumentMatchers.nullable(Long.class))).thenReturn(1L);
+        when(userTransactionManager.addTransaction(eq(USER_ID), any())).thenReturn(1L);
 
         String firstOtp = ocraOtpProvider.generate(generateRequest);
 

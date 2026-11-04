@@ -50,7 +50,7 @@ public class OcraOtpProvider {
 
         otpValidator.validateGenerate(request);
 
-        long timeCounter = resolveTimeCounter(request);
+        long timeCounter = timeStepUtil.currentTimeStep(properties.getTimeStepSeconds());
 
         try {
             byte[] secretKey = secretKeyProvider.getSecretKey(request.getUserIdentifier());
@@ -60,8 +60,7 @@ public class OcraOtpProvider {
             otpData.setOtpMapData(request.getOtpData());
             otpData.setOtpLength(request.getOtpLength());
 
-            long issuanceSequence = userTransactionManager.addTransaction(
-                    request.getUserIdentifier(), otpData, request.getOtpExpiration());
+            long issuanceSequence = userTransactionManager.addTransaction(request.getUserIdentifier(), otpData);
             String transactionDataString = otpUtil.buildTransactionDataString(otpData);
 
             String generatedOtp = generateOtp(
@@ -118,7 +117,7 @@ public class OcraOtpProvider {
                                 long issuanceSequence) {
 
         try {
-            long currentStep = resolveTimeCounter(request);
+            long currentStep = timeStepUtil.currentTimeStep(properties.getTimeStepSeconds());
             byte[] secretKey = secretKeyProvider.getSecretKey(userId);
 
             for (long step = -properties.getAllowedClockSkew(); step <= properties.getAllowedClockSkew(); step++) {
@@ -157,19 +156,11 @@ public class OcraOtpProvider {
         return issuanceSequence == null ? 1L : issuanceSequence;
     }
 
-    private long resolveTimeCounter(OtpRequest request) {
-
-        Long otpExpiration = request.getOtpExpiration();
-        return otpExpiration == null
-                ? timeStepUtil.currentTimeStep(properties.getTimeStepSeconds())
-                : otpExpiration;
-    }
-
     private String generateOtp(byte[] secretKey,
-                               String otpData,
-                               long timeCounter,
-                               int otpLength,
-                               long issuanceSequence) {
+                                 String otpData,
+                                 long timeCounter,
+                                 int otpLength,
+                                 long issuanceSequence) {
 
         String otpPayload = otpUtil.buildOtpPayload(otpData, timeCounter, issuanceSequence);
 

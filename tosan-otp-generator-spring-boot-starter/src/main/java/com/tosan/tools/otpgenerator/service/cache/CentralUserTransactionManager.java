@@ -31,13 +31,14 @@ public class CentralUserTransactionManager extends AbstractUserTransactionManage
     }
 
     @Override
-    public long addTransaction(String userId, OtpData otpData, Long ttlSeconds) {
+    public long addTransaction(String userId, OtpData otpData) {
+
+        long ttl = otpProperties.getTimeStepSeconds();
 
         lockManagementService.requestWriteLock(USER_TRANSACTION_LOCK_TYPE, userId, LOCK_TIMEOUT_SECONDS, false);
 
         try {
-            long resolvedTtl = ttlSeconds == null ? otpProperties.getTimeStepSeconds() : ttlSeconds;
-            return registerOrReissueTransaction(userId, otpData, resolvedTtl);
+            return registerOrReissueTransaction(userId, otpData, ttl);
         } finally {
             lockManagementService.unlock(USER_TRANSACTION_LOCK_TYPE, userId);
         }
