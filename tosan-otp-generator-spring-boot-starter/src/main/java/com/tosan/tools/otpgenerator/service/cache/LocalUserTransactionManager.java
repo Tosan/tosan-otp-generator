@@ -33,11 +33,11 @@ public class LocalUserTransactionManager extends AbstractUserTransactionManager 
     }
 
     @Override
-    public long addTransaction(String userId, OtpData otpData) {
+    public long addTransaction(String userId, OtpData otpData, Long ttl) {
 
-        long ttl = otpProperties.getTimeStepSeconds();
         synchronized (getUserLock(userId)) {
-            return registerOrReissueTransaction(userId, otpData, ttl);
+            long resolvedTtl = ttl == null ? otpProperties.getTimeStepSeconds() : ttl;
+            return registerOrReissueTransaction(userId, otpData, resolvedTtl);
         }
     }
 

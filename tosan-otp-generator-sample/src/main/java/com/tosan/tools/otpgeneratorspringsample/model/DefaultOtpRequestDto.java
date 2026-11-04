@@ -20,4 +20,5 @@ public class DefaultOtpRequestDto implements OtpRequest {
 
     private Integer otpLength;
 
+    private Long otpExpiration;
 }

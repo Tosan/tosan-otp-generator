@@ -22,4 +22,6 @@ public class DefaultOtpValidationRequestDto implements OtpVerificationRequest {
 
     private Integer otpLength;
 
+    private Long otpExpiration;
+
 }

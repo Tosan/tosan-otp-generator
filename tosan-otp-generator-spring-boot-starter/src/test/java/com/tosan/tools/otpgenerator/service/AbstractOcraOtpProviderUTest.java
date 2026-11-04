@@ -40,7 +40,9 @@ public abstract class AbstractOcraOtpProviderUTest extends AbstractUTest {
     @BeforeEach
     void ocraOtpProviderSetUp() {
         org.mockito.Mockito.when(userTransactionManager.addTransaction(
-                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any()))
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.nullable(Long.class)))
                 .thenReturn(1L);
         ocraOtpProvider = createOcraOtpProviderWithRealUtil();
     }

@@ -23,4 +23,8 @@ public interface OtpRequest {
      * OTP length (number of digits).
      */
     Integer getOtpLength();
+
+    default Long getOtpExpiration() {
+        return null;
+    }
 }
