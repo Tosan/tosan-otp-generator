@@ -49,7 +49,6 @@ public final class TestFixtures {
         private String userIdentifier;
         private TestOtpData otpData;
         private Integer otpLength;
-        private Long otpExpiration;
 
         @Override
         public java.util.Map<String, Object> getOtpData() {
@@ -70,7 +69,6 @@ public final class TestFixtures {
         private String userIdentifier;
         private TestOtpData otpData;
         private Integer otpLength;
-        private Long otpExpiration;
         private String otp;
 
         @Override
@@ -94,7 +92,7 @@ public final class TestFixtures {
     }
 
     public static TestOtpRequest otpRequest(String userId, TestOtpData testOtpData, Integer otpLength) {
-        return new TestOtpRequest(userId, testOtpData, otpLength, null);
+        return new TestOtpRequest(userId, testOtpData, otpLength);
     }
 
     public static TestOtpVerificationRequest otpVerificationRequest(String userId,
@@ -107,14 +105,6 @@ public final class TestFixtures {
                                                                     TestOtpData testOtpData,
                                                                     String otp,
                                                                     Integer otpLength) {
-        return new TestOtpVerificationRequest(userId, testOtpData, otpLength, null, otp);
-    }
-
-    public static TestOtpVerificationRequest otpVerificationRequest(String userId,
-                                                                    TestOtpData testOtpData,
-                                                                    String otp,
-                                                                    Integer otpLength,
-                                                                    Long otpExpiration) {
-        return new TestOtpVerificationRequest(userId, testOtpData, otpLength, otpExpiration, otp);
+        return new TestOtpVerificationRequest(userId, testOtpData, otpLength, otp);
     }
 }
